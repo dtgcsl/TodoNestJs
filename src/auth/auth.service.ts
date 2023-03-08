@@ -23,7 +23,6 @@ export class AuthService {
   }
 
   async login(user: any) {
-    // console.log(user);
     const roles = [];
     const permissions = [];
     const todos = [];

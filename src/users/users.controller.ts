@@ -18,11 +18,15 @@ import { UpdateUserDto } from './dto/update-user-dto';
 import { Users } from '../entity/users.entity';
 import { PasswordInterceptor } from '../common/interceptor/password.interceptor';
 import { RolesGuard } from '../auth/roles.guard';
-import { HasRoles } from '../auth/has-roles.decorator';
+import { HasRoles } from '../auth/decorator/has-roles.decorator';
 import { RoleEnum } from '../role/enum/role.enum';
+import { PermissionsGuard } from '../auth/permissions.guard';
+import { OwnersGuard } from '../auth/owners.guard';
+import { AuthGuard } from '@nestjs/passport';
+import { RequirePermissions } from '../auth/decorator/permission.decorator';
+import { PermissionEnum } from '../permission/enum/permission.enum';
 
 @Controller('users')
-@UseGuards(RolesGuard)
 export class UsersController {
   constructor(private userService: UsersService) {}
 

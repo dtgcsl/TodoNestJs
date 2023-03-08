@@ -1,9 +1,9 @@
-import { IsNotEmpty } from 'class-validator';
+import { IsNotEmpty, MaxLength } from 'class-validator';
 import { RoleEnum } from '../enum/role.enum';
 
 export class UpdateAssignRoleDto {
   @IsNotEmpty()
   uid: number;
-  @IsNotEmpty()
+  @IsNotEmpty({ each: true })
   role: Array<RoleEnum>;
 }

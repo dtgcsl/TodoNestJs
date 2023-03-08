@@ -26,35 +26,86 @@ export class PermissionController {
   constructor(private readonly permissionService: PermissionService) {}
 
   @Post()
-  create(@Body() createPermissionDto: CreatePermissionDto) {
-    return this.permissionService.create(createPermissionDto);
+  async create(@Body() createPermissionDto: CreatePermissionDto) {
+    return await this.permissionService.create(createPermissionDto);
   }
 
   @Get()
-  findAll() {
-    return this.permissionService.findAll();
+  async findAll() {
+    return await this.permissionService.findAll();
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.permissionService.findOne(+id);
+  async findOne(@Param('id') id: string) {
+    try {
+      const permission = await this.permissionService.findOne(+id);
+      console.log(permission);
+      if (permission !== null) {
+        return permission;
+      } else {
+        throw new Error();
+      }
+    } catch (error) {
+      throw new HttpException(
+        {
+          status: HttpStatus.FORBIDDEN,
+          error: 'Not found that id',
+        },
+        HttpStatus.FORBIDDEN,
+        {
+          cause: error,
+        },
+      );
+    }
   }
 
   @Patch(':id')
-  update(
+  async update(
     @Param('id') id: string,
     @Body() updatePermissionDto: UpdatePermissionDto,
   ) {
-    return this.permissionService.update(+id, updatePermissionDto);
+    try {
+      const permission = await this.permissionService.update(
+        +id,
+        updatePermissionDto,
+      );
+      if (typeof permission === 'string') {
+        throw new Error(permission);
+      }
+      return permission;
+    } catch (error) {
+      throw new HttpException(
+        {
+          status: HttpStatus.FORBIDDEN,
+          error: error.message,
+        },
+        HttpStatus.FORBIDDEN,
+        {
+          cause: error,
+        },
+      );
+    }
   }
-
   @Delete(':id')
   async remove(@Param('id') id: string) {
-    const result = await this.permissionService.remove(+id);
-    if (result.affected === 0) {
-      return 'Permission is not exit';
-    } else if (result.affected === 1) {
-      return 'Permission have been removed';
+    try {
+      const result = await this.permissionService.remove(+id);
+      if (result.affected === 0) {
+        throw new Error('Permission is not exit');
+      } else if (result.affected === 1) {
+        return 'Permission have been removed';
+      }
+    } catch (error) {
+      throw new HttpException(
+        {
+          status: HttpStatus.FORBIDDEN,
+          error: error.message,
+        },
+        HttpStatus.FORBIDDEN,
+        {
+          cause: error,
+        },
+      );
     }
   }
 }
@@ -91,12 +142,13 @@ export class AssignPermission {
       const permission = await this.assignPermissionService.edit(
         editAssignPermissionDto,
       );
+      if (typeof permission === 'string') throw new Error(permission);
       return permission;
     } catch (error) {
       throw new HttpException(
         {
           status: HttpStatus.FORBIDDEN,
-          error: 'Not found that id',
+          error: error.message,
         },
         HttpStatus.FORBIDDEN,
         {
@@ -108,7 +160,14 @@ export class AssignPermission {
   @Delete()
   async delete(@Body() deleteAssignPermissionDto: DeleteAssignPermissionDto) {
     try {
-      return this.assignPermissionService.delete(deleteAssignPermissionDto);
+      const permission = this.assignPermissionService.delete(
+        deleteAssignPermissionDto,
+      );
+
+      if (typeof permission === 'string') {
+        throw new Error(permission);
+      }
+      return permission;
     } catch (error) {
       throw new HttpException(
         {

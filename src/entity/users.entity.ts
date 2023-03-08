@@ -14,6 +14,8 @@ export class Users {
   @OneToMany(() => UsersHasTodos, (usersHasTodos) => usersHasTodos.users)
   usersHasTodos: UsersHasTodos[];
 
-  @OneToMany(() => Role, (role) => role.users)
+  @OneToMany(() => Role, (role) => role.users, {
+    cascade: true,
+  })
   roles: Role[];
 }

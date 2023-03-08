@@ -73,14 +73,14 @@ export class AssignTodoService {
     const uid = assignTodoDto.uid;
     const todoId = assignTodoDto.todoId;
 
-    const users = await this.UsersRepository.findOne({
-      where: { uid: uid },
-    });
     const todo = await this.TodoRepository.findOne({
       where: { todoId: todoId },
     });
-    if (!users) return 'Users is not correct';
     if (!todo) return 'Todo is not correct';
+    const users = await this.UsersRepository.findOne({
+      where: { uid: uid },
+    });
+    if (!users) return 'Users is not correct';
     const usersHasTodos = await this.UsersHasTodosRepository.createQueryBuilder(
       'usersHasTodo',
     )
@@ -98,17 +98,17 @@ export class AssignTodoService {
   async updateTodo(updateAssignTodoDto: UpdateAssignTodoDto) {
     const todoId = updateAssignTodoDto.todoId;
     const arrUid = updateAssignTodoDto.uid;
-    const users = await this.UsersRepository.createQueryBuilder('users')
-      .where('users.uid IN (:...uid)', { uid: arrUid })
-      .getMany();
+
     const todo = await this.TodoRepository.findOne({
       where: { todoId: todoId },
     });
+    if (!todo) return 'Todo is not correct';
+    const users = await this.UsersRepository.createQueryBuilder('users')
+      .where('users.uid IN (:...uid)', { uid: arrUid })
+      .getMany();
     if (+users.length !== +arrUid.length) {
       return 'Some of users is not correct please try again';
     }
-    if (!todo) return 'Todo is not correct';
-
     await this.UsersHasTodosRepository.delete({
       todoId: todoId,
     });
@@ -134,10 +134,10 @@ export class AssignTodoService {
     const users = await this.UsersRepository.findOne({
       where: { uid: uid },
     });
+    if (!users) return 'Users is not correct';
     const todo = await this.TodoRepository.findOne({
       where: { todoId: todoId },
     });
-    if (!users) return 'Users is not correct';
     if (!todo) return 'Todo is not correct';
     return await this.UsersHasTodosRepository.createQueryBuilder('usersHasTodo')
       .delete()

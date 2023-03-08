@@ -26,7 +26,6 @@ export class AssignRoleService {
   async assignRole(assignRoleDto: AssignRoleDto) {
     const uid = assignRoleDto.uid;
     const role = assignRoleDto.role;
-
     const users = await this.UsersRepository.findOne({
       where: { uid: uid },
     });
@@ -34,9 +33,10 @@ export class AssignRoleService {
     const roleOfUser = await this.RoleRepository.createQueryBuilder('role')
       .where('uid = :uid AND name= :role', { uid: uid, role: role })
       .getOne();
+
     if (!roleOfUser) {
       return this.RoleRepository.save(
-        this.RoleRepository.create(assignRoleDto),
+        this.RoleRepository.create({ uid: uid, name: role }),
       );
     } else {
       return 'The role has been assign';
@@ -49,9 +49,23 @@ export class AssignRoleService {
     const users = await this.UsersRepository.findOne({
       where: { uid: uid },
     });
-
     if (!users) return 'Users is not correct';
-    if (arrRole.length > Object.keys(RoleEnum).length)
+    if (typeof arrRole === 'string') {
+      await this.RoleRepository.delete({
+        uid: uid,
+      });
+      return await this.RoleRepository.createQueryBuilder()
+        .insert()
+        .into(Role)
+        .values([
+          {
+            uid: uid,
+            name: arrRole,
+          },
+        ])
+        .execute();
+    }
+    if (arrRole.length >= Object.keys(RoleEnum).length)
       return 'Role must not repeat';
     await this.RoleRepository.delete({
       uid: uid,
@@ -81,9 +95,7 @@ export class AssignRoleService {
     });
 
     if (!users) return 'Users is not correct';
-    const usersHasRole = await this.UsersHasTodosRepository.createQueryBuilder(
-      'role',
-    )
+    const usersHasRole = await this.RoleRepository.createQueryBuilder('role')
       .delete()
       .from(Role)
       .where('uid = :uid AND name = :role', {

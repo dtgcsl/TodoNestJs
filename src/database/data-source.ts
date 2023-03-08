@@ -23,6 +23,6 @@ export const AppDataSource = new DataSource({
   username: 'postgres',
   password: '1',
   database: 'postgres',
-  synchronize: true,
+  synchronize: false,
   entities: [Users, Todo, Role, UsersHasTodos, Permission],
 } as DataSourceOptions);

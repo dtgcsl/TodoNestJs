@@ -30,8 +30,10 @@ export class TypeOrmConfigService implements TypeOrmOptionsFactory {
       database: this.configService.get('database.database'),
       entities: [__dirname + '/../**/*.entity{.ts,.js}'],
       schema: this.configService.get('database.schema'),
-      synchronize: true,
-      // autoLoadEntities: true,
+      migrations: [
+        /*...*/
+      ],
+      synchronize: false,
 
       // type: process.env.DATABASE_TYPE,
       // host: process.env.DATABASE_HOST,

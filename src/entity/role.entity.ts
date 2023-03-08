@@ -15,7 +15,7 @@ import { IsEnum } from 'class-validator';
 export class Role {
   @PrimaryGeneratedColumn()
   rid: number;
-  @Column({ type: 'varchar', nullable: false })
+  @Column({ type: 'varchar', nullable: true })
   @IsEnum(RoleEnum)
   name: string;
   @Column('int')
@@ -26,6 +26,9 @@ export class Role {
   @OneToMany(
     () => RolesHasPermissions,
     (rolesHasPermissions) => rolesHasPermissions.role,
+    {
+      cascade: true,
+    },
   )
   rolesHasPermissions: RolesHasPermissions[];
 }

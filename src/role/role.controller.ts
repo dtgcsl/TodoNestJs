@@ -68,8 +68,10 @@ export class AssignRoleController {
         deleteAssignRoleDto,
       );
       if (users instanceof DeleteResult) {
-        if (users.affected === 0) return 'User does not have role';
-        return 'Role has been delete';
+        if (users.affected === 0) throw Error('User does not have role');
+        throw Error('Role has been delete');
+      } else if (typeof users === 'string') {
+        throw new Error(users);
       }
       return await this.assignRoleService.deleteRole(deleteAssignRoleDto);
     } catch (error) {

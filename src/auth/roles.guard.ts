@@ -1,8 +1,6 @@
 import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { RoleEnum } from '../role/enum/role.enum';
-import { JwtStrategy } from './jwt.strategy';
-import { GqlExecutionContext } from '@nestjs/graphql';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -16,14 +14,10 @@ export class RolesGuard implements CanActivate {
     if (!requiredRoles) {
       return true;
     }
-    const ctx = GqlExecutionContext.create(context);
-    const user = ctx.getContext().req.user;
-    console.log(user);
-
-    const token: string = context
-      .switchToHttp()
-      .getRequest()
-      .headers.authorization.split(' ')[1];
+    const request = context.switchToHttp().getRequest();
+    const user = request.user;
+    console.log('Role Guard -------------', user);
+    console.log('*******************************');
     return requiredRoles.some((role) => user?.roles?.includes(role));
   }
 }

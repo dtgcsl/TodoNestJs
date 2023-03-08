@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { Users } from '../entity/users.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -112,20 +112,33 @@ export class UsersService {
   }
 
   async findOne(name: string): Promise<Users | undefined> {
-    return await this.UsersRepository.findOne({
-      where: {
-        name: name,
-      },
-      select: { uid: true, name: true, password: true },
-      relations: {
-        roles: {
-          rolesHasPermissions: {
-            permission: true,
+    try {
+      return await this.UsersRepository.findOneOrFail({
+        select: { uid: true, name: true, password: true },
+        relations: {
+          roles: {
+            rolesHasPermissions: {
+              permission: true,
+            },
           },
+          usersHasTodos: true,
         },
-        usersHasTodos: true,
-      },
-    });
+        where: {
+          name: name,
+        },
+      });
+    } catch (error) {
+      throw new HttpException(
+        {
+          status: HttpStatus.FORBIDDEN,
+          error: 'Username or password not correct! Please try again',
+        },
+        HttpStatus.FORBIDDEN,
+        {
+          cause: error,
+        },
+      );
+    }
   }
 
   async update(id: number, updateUser: UpdateUserDto) {
@@ -137,6 +150,6 @@ export class UsersService {
   }
 
   async delete(id: number) {
-    return await this.UsersRepository.delete(id);
+    return await this.UsersRepository.delete({ uid: id });
   }
 }

@@ -38,18 +38,24 @@ export class PermissionService {
   }
 
   findOne(id: number) {
-    return this.PermissionRepository.createQueryBuilder('permission')
-      .leftJoinAndSelect('permission.rolesHasPermissions', 'roleHasPermissions')
-      .select(['permission', 'roleHasPermissions.rid'])
-      .orderBy('permission.id')
-      .where('permission.id = :id', { id: id })
-      .getOne();
+    return (
+      this.PermissionRepository.createQueryBuilder('permission')
+        .leftJoinAndSelect(
+          'permission.rolesHasPermissions',
+          'roleHasPermissions',
+        )
+        .select(['permission', 'roleHasPermissions.rid'])
+        // .orderBy('permission.id')
+        .where('permission.id = :id', { id: id })
+        .getOne()
+    );
   }
 
   async update(id: number, updatePermissionDto: UpdatePermissionDto) {
-    const permissionUpdate = await this.PermissionRepository.findOneByOrFail({
-      id: id,
+    const permissionUpdate = await this.PermissionRepository.findOne({
+      where: { id: id },
     });
+    if (!permissionUpdate) return 'Not found that id';
     this.PermissionRepository.merge(permissionUpdate, updatePermissionDto);
     return await this.PermissionRepository.save(permissionUpdate);
   }
@@ -127,7 +133,7 @@ export class AssignPermissionService {
         ])
         .execute();
     }
-    return 'The data has been update';
+    return { success: 'The data has been update' };
   }
   async delete(deleteAssignPermissionDto: DeleteAssignPermissionDto) {
     const rid = deleteAssignPermissionDto.rid;
