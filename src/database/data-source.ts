@@ -7,16 +7,6 @@ import { UsersHasTodos } from '../entity/usersHasTodos.entity';
 import { Permission } from '../entity/permission.entity';
 
 export const AppDataSource = new DataSource({
-  /*
-  DATABASE_TYPE='postgres'
-  DATABASE_HOST='localhost'
-  DATABASE_PORT=5432
-  DATABASE_USERNAME='postgres'
-  DATABASE_PASSWORD='1'
-  DATABASE_DATABASE=
-  DATABASE_ENTITIES=
-  DATABASE_SCHEMA='Todo'
-  DATABASE_SYNCHRONIZE=,*/
   type: 'postgres',
   host: 'localhost',
   port: 5432,
@@ -24,5 +14,7 @@ export const AppDataSource = new DataSource({
   password: '1',
   database: 'postgres',
   synchronize: false,
-  entities: [Users, Todo, Role, UsersHasTodos, Permission],
+  schema: 'Todo',
+  entities: [__dirname + '/../**/*.entity{.ts,.js}'],
+  migrations: ['dist/database/migration/*.js'],
 } as DataSourceOptions);

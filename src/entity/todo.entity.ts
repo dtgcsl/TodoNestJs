@@ -34,6 +34,8 @@ export class Todo {
   })
   createdById: number;
 
-  @OneToMany(() => UsersHasTodos, (usersHasTodos) => usersHasTodos.todo)
+  @OneToMany(() => UsersHasTodos, (usersHasTodos) => usersHasTodos.todo, {
+    cascade: true,
+  })
   usersHasTodos: UsersHasTodos[];
 }

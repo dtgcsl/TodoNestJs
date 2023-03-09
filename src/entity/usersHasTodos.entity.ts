@@ -18,13 +18,11 @@ export class UsersHasTodos {
   @Column('int')
   uid: number;
 
-  @ManyToOne(() => Users, (users) => users.usersHasTodos, {
-    onDelete: 'CASCADE',
-  })
+  @ManyToOne(() => Users, (users) => users.usersHasTodos)
   @JoinColumn({ name: 'uid' })
   users: Users;
 
-  @ManyToOne(() => Todo, (todo) => todo.usersHasTodos, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Todo, (todo) => todo.usersHasTodos)
   @JoinColumn({ name: 'todoId' })
   todo: Todo;
 }

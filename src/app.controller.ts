@@ -9,6 +9,7 @@ import { PermissionsGuard } from './auth/permissions.guard';
 import { PermissionEnum } from './permission/enum/permission.enum';
 import { RequirePermissions } from './auth/decorator/permission.decorator';
 import { OwnersGuard } from './auth/owners.guard';
+import {LocalAuthGuard} from "./auth/local-auth.guard";
 
 @Controller()
 export class AppController {
@@ -17,17 +18,15 @@ export class AppController {
     private userService: UsersService,
   ) {}
 
-  @UseGuards(AuthGuard('local'))
+  @UseGuards(LocalAuthGuard)
   @Post('auth/login')
   async login(@Request() req) {
     return this.authService.login(req.user);
   }
 
-  @UseGuards(RolesGuard, PermissionsGuard, OwnersGuard)
+  @UseGuards(RolesGuard)
   @UseGuards(AuthGuard('jwt'))
   @HasRoles('User', 'Admin')
-  // @ts-ignore
-  @RequirePermissions(PermissionEnum[2])
   @Get('profile')
   getProfile(@Request() req) {
     return req.user;

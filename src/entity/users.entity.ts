@@ -11,7 +11,9 @@ export class Users {
   @Column({ type: 'varchar', select: false })
   password: string;
 
-  @OneToMany(() => UsersHasTodos, (usersHasTodos) => usersHasTodos.users)
+  @OneToMany(() => UsersHasTodos, (usersHasTodos) => usersHasTodos.users, {
+    cascade: true,
+  })
   usersHasTodos: UsersHasTodos[];
 
   @OneToMany(() => Role, (role) => role.users, {

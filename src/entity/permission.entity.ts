@@ -10,6 +10,7 @@ export class Permission {
   @OneToMany(
     () => RolesHasPermissions,
     (rolesHasPermissions) => rolesHasPermissions.permission,
+    { cascade: true },
   )
   rolesHasPermissions: RolesHasPermissions[];
 }
