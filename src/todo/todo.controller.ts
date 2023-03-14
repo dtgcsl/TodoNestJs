@@ -42,72 +42,25 @@ export class TodoController {
 
   @Get('/:id')
   async findOne(@Param('id', ParseIntPipe) id: number) {
-    try {
-      const Todo = await this.todoService.findOne(id);
-      if (Todo !== null) {
-        return Todo;
-      } else {
-        throw new Error();
-      }
-    } catch (error) {
-      throw new HttpException(
-        {
-          status: HttpStatus.FORBIDDEN,
-          error: 'Not found that id',
-        },
-        HttpStatus.FORBIDDEN,
-        {
-          cause: error,
-        },
-      );
-    }
+    const Todo = await this.todoService.findOne(id);
   }
 
-  @UseGuards(RolesGuard, PermissionsGuard, OwnersGuard)
-  @UseGuards(AuthGuard('jwt'))
-  @HasRoles('User', 'Admin')
-  // @ts-ignore
-  @RequirePermissions(PermissionEnum[2])
+  // @UseGuards(RolesGuard, PermissionsGuard, OwnersGuard)
+  // @UseGuards(AuthGuard('jwt'))
+  // @HasRoles('User', 'Admin')
+  // // @ts-ignore
+  // @RequirePermissions(PermissionEnum[2])
   @Patch(':id')
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateTodoDto: UpdateTodoDto,
   ) {
-    try {
-      const todo = await this.todoService.update(id, updateTodoDto);
-      return todo;
-    } catch (error) {
-      throw new HttpException(
-        {
-          status: HttpStatus.FORBIDDEN,
-          error: 'Not found that id',
-        },
-        HttpStatus.FORBIDDEN,
-        {
-          cause: error,
-        },
-      );
-    }
+    return await this.todoService.update(id, updateTodoDto);
   }
 
   @Delete(':id')
   async delete(@Param('id', ParseIntPipe) id: number) {
-    try {
-      const todo = await this.todoService.delete(id);
-      if (todo.affected === 1) return 'Todo has been delete';
-      throw new Error();
-    } catch (error) {
-      throw new HttpException(
-        {
-          status: HttpStatus.FORBIDDEN,
-          error: 'Not found that id',
-        },
-        HttpStatus.FORBIDDEN,
-        {
-          cause: error,
-        },
-      );
-    }
+    return this.todoService.delete(id);
   }
 }
 
@@ -117,56 +70,16 @@ export class AssignTodoController {
 
   @Post()
   async assignTodo(@Body() assignTodoDto: AssignTodoDto) {
-    try {
-      const assign = await this.assignTodoService.assignTodo(assignTodoDto);
-      if (typeof assign === 'string') {
-        throw new Error(assign);
-      }
-      return assign;
-    } catch (error) {
-      throw new HttpException(
-        {
-          status: HttpStatus.FORBIDDEN,
-          error: error.message,
-        },
-        HttpStatus.FORBIDDEN,
-      );
-    }
+    return await this.assignTodoService.assignTodo(assignTodoDto);
   }
 
   @Patch()
   async updateTodo(@Body() updateAssignTodoDto: UpdateAssignTodoDto) {
-    try {
-      const assign = await this.assignTodoService.updateTodo(
-        updateAssignTodoDto,
-      );
-      if (typeof assign === 'string') {
-        throw new Error(assign);
-      }
-      return 'The data has been update';
-    } catch (error) {
-      throw new HttpException(
-        {
-          status: HttpStatus.FORBIDDEN,
-          error: error.message,
-        },
-        HttpStatus.FORBIDDEN,
-      );
-    }
+    return await this.assignTodoService.updateTodo(updateAssignTodoDto);
   }
 
   @Delete()
   deleteTodo(@Body() deleteAssignTodoDto: DeleteAssignTodoDto) {
-    try {
-      return this.assignTodoService.deleteTodo(deleteAssignTodoDto);
-    } catch (error) {
-      throw new HttpException(
-        {
-          status: HttpStatus.FORBIDDEN,
-          error: error.message,
-        },
-        HttpStatus.FORBIDDEN,
-      );
-    }
+    return this.assignTodoService.deleteTodo(deleteAssignTodoDto);
   }
 }

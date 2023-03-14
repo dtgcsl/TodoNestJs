@@ -1,4 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Todo } from '../entity/todo.entity';
 import { Repository } from 'typeorm';
 import { CreateTodoDto } from './dto/create-todo-dto';
@@ -35,26 +41,72 @@ export class TodoService {
   }
 
   async findOne(id: number): Promise<Todo> {
-    return await this.TodoRepository.createQueryBuilder('todo')
-      .leftJoinAndSelect('todo.usersHasTodos', 'usersHasTodos')
-      .select(['todo', 'usersHasTodos.uid'])
-      .where('todo.todoId = :id', { id: id })
-      .getOne();
+    try {
+      const Todo = await this.TodoRepository.createQueryBuilder('todo')
+        .leftJoinAndSelect('todo.usersHasTodos', 'usersHasTodos')
+        .select(['todo', 'usersHasTodos.uid'])
+        .where('todo.todoId = :id', { id: id })
+        .getOne();
+      if (Todo !== null) {
+        return Todo;
+      } else {
+        throw new Error();
+      }
+    } catch (error) {
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          error: 'Not found that id',
+        },
+        HttpStatus.BAD_REQUEST,
+        {
+          cause: error,
+        },
+      );
+    }
   }
 
   async update(id: number, updateTodo: UpdateTodoDto) {
-    const todoUpdate = await this.TodoRepository.findOneByOrFail({
-      todoId: id,
-    });
-    this.TodoRepository.merge(todoUpdate, updateTodo);
-    return await this.TodoRepository.save(todoUpdate);
+    try {
+      const todoUpdate = await this.TodoRepository.findOneByOrFail({
+        todoId: id,
+      });
+
+      this.TodoRepository.merge(todoUpdate, updateTodo);
+      return await this.TodoRepository.save(todoUpdate);
+    } catch (error) {
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          error: 'Not found that id',
+        },
+        HttpStatus.BAD_REQUEST,
+        {
+          cause: error,
+        },
+      );
+    }
   }
 
   async delete(id: number) {
-    const todoDelete = await this.TodoRepository.delete({
-      todoId: id,
-    });
-    return todoDelete;
+    try {
+      const todoDelete = await this.TodoRepository.delete({
+        todoId: id,
+      });
+      if (todoDelete.affected === 1) return 'Todo has been delete';
+      throw new Error();
+    } catch (error) {
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          error: 'Not found that id',
+        },
+        HttpStatus.BAD_REQUEST,
+        {
+          cause: error,
+        },
+      );
+    }
   }
 }
 
@@ -70,82 +122,122 @@ export class AssignTodoService {
   ) {}
 
   async assignTodo(assignTodoDto: AssignTodoDto) {
-    const uid = assignTodoDto.uid;
-    const todoId = assignTodoDto.todoId;
+    try {
+      const uid = assignTodoDto.uid;
+      const todoId = assignTodoDto.todoId;
 
-    const todo = await this.TodoRepository.findOne({
-      where: { todoId: todoId },
-    });
-    if (!todo) return 'Todo is not correct';
-    const users = await this.UsersRepository.findOne({
-      where: { uid: uid },
-    });
-    if (!users) return 'Users is not correct';
-    const usersHasTodos = await this.UsersHasTodosRepository.createQueryBuilder(
-      'usersHasTodo',
-    )
-      .where('uid = :uid AND "todoId"= :todoId', { uid: uid, todoId: todoId })
-      .getOne();
-    if (!usersHasTodos) {
-      return this.UsersHasTodosRepository.save(
-        this.UsersHasTodosRepository.create(assignTodoDto),
+      const todo = await this.TodoRepository.findOne({
+        where: { todoId: todoId },
+      });
+      if (!todo) throw new Error('Todo is not correct');
+      const users = await this.UsersRepository.findOne({
+        where: { uid: uid },
+      });
+      if (!users) throw new Error('Users is not correct');
+      const usersHasTodos =
+        await this.UsersHasTodosRepository.createQueryBuilder('usersHasTodo')
+          .where('uid = :uid AND "todoId"= :todoId', {
+            uid: uid,
+            todoId: todoId,
+          })
+          .getOne();
+      if (!usersHasTodos) {
+        return this.UsersHasTodosRepository.save(
+          this.UsersHasTodosRepository.create(assignTodoDto),
+        );
+      } else {
+        throw new Error('The todo has been assign');
+      }
+    } catch (error) {
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          error: error.message,
+        },
+        HttpStatus.BAD_REQUEST,
+        {
+          cause: error,
+        },
       );
-    } else {
-      return 'The todo has been assign';
     }
   }
 
   async updateTodo(updateAssignTodoDto: UpdateAssignTodoDto) {
-    const todoId = updateAssignTodoDto.todoId;
-    const arrUid = updateAssignTodoDto.uid;
+    try {
+      const todoId = updateAssignTodoDto.todoId;
+      const arrUid = updateAssignTodoDto.uid;
 
-    const todo = await this.TodoRepository.findOne({
-      where: { todoId: todoId },
-    });
-    if (!todo) return 'Todo is not correct';
-    const users = await this.UsersRepository.createQueryBuilder('users')
-      .where('users.uid IN (:...uid)', { uid: arrUid })
-      .getMany();
-    if (+users.length !== +arrUid.length) {
-      return 'Some of users is not correct please try again';
+      const todo = await this.TodoRepository.findOne({
+        where: { todoId: todoId },
+      });
+      if (!todo) throw new Error('Todo is not correct');
+      const users = await this.UsersRepository.createQueryBuilder('users')
+        .where('users.uid IN (:...uid)', { uid: arrUid })
+        .getMany();
+      if (+users.length !== +arrUid.length) {
+        throw new Error('Some of users is not correct please try again');
+      }
+      await this.UsersHasTodosRepository.delete({
+        todoId: todoId,
+      });
+      for (const uid of arrUid) {
+        await this.UsersHasTodosRepository.createQueryBuilder()
+          .insert()
+          .into(UsersHasTodos)
+          .values([
+            {
+              todoId: todoId,
+              uid: uid,
+            },
+          ])
+          .execute();
+      }
+      return 'The data has been update';
+    } catch (error) {
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          error: error.message,
+        },
+        HttpStatus.BAD_REQUEST,
+        {
+          cause: error,
+        },
+      );
     }
-    await this.UsersHasTodosRepository.delete({
-      todoId: todoId,
-    });
-    for (const uid of arrUid) {
-      await this.UsersHasTodosRepository.createQueryBuilder()
-        .insert()
-        .into(UsersHasTodos)
-        .values([
-          {
-            todoId: todoId,
-            uid: uid,
-          },
-        ])
-        .execute();
-    }
-    return;
   }
 
   async deleteTodo(deleteAssignTodoDto: DeleteAssignTodoDto) {
-    const uid = deleteAssignTodoDto.uid;
-    const todoId = deleteAssignTodoDto.todoId;
+    try {
+      const uid = deleteAssignTodoDto.uid;
+      const todoId = deleteAssignTodoDto.todoId;
 
-    const users = await this.UsersRepository.findOne({
-      where: { uid: uid },
-    });
-    if (!users) return 'Users is not correct';
-    const todo = await this.TodoRepository.findOne({
-      where: { todoId: todoId },
-    });
-    if (!todo) return 'Todo is not correct';
-    return await this.UsersHasTodosRepository.createQueryBuilder('usersHasTodo')
-      .delete()
-      .from(UsersHasTodos)
-      .where('uid = :uid AND todoId = :todoId', {
-        uid: uid,
-        todoId: todoId,
-      })
-      .execute();
+      const users = await this.UsersRepository.findOne({
+        where: { uid: uid },
+      });
+      if (!users) throw new Error('Users is not correct');
+      const todo = await this.TodoRepository.findOne({
+        where: { todoId: todoId },
+      });
+      if (!todo) throw new Error('Todo is not correct');
+      return await this.UsersHasTodosRepository.createQueryBuilder(
+        'usersHasTodo',
+      )
+        .delete()
+        .from(UsersHasTodos)
+        .where('uid = :uid AND todoId = :todoId', {
+          uid: uid,
+          todoId: todoId,
+        })
+        .execute();
+    } catch (error) {
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          error: error.message,
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
   }
 }

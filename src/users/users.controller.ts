@@ -43,19 +43,8 @@ export class UsersController {
   }
 
   @Get('/:id')
-  async findById(@Param('id', ParseIntPipe) id: number) {
-    try {
-      const user = await this.userService.findById(id);
-      return user;
-    } catch (error) {
-      throw new HttpException(
-        {
-          status: HttpStatus.FORBIDDEN,
-          error: 'Not found that id',
-        },
-        HttpStatus.FORBIDDEN,
-      );
-    }
+  async findById(@Param('id', ParseIntPipe) id: number): Promise<Users> {
+    return await this.userService.findById(id);
   }
 
   @Patch(':id')
@@ -63,37 +52,11 @@ export class UsersController {
     @Param('id', ParseIntPipe) id: number,
     @Body() updateUserDto: UpdateUserDto,
   ) {
-    try {
-      const user = await this.userService.update(id, updateUserDto);
-      return user;
-    } catch (error) {
-      throw new HttpException(
-        {
-          status: HttpStatus.FORBIDDEN,
-          error: 'Not found that id',
-        },
-        HttpStatus.FORBIDDEN,
-      );
-    }
+    return await this.userService.update(id, updateUserDto);
   }
 
   @Delete(':id')
   async delete(@Param('id', ParseIntPipe) id: number) {
-    try {
-      const user = await this.userService.delete(id);
-      if (user.affected === 1) return 'User has been delete';
-      throw new Error();
-    } catch (error) {
-      throw new HttpException(
-        {
-          status: HttpStatus.FORBIDDEN,
-          error: 'Not found that id',
-        },
-        HttpStatus.FORBIDDEN,
-        {
-          cause: error,
-        },
-      );
-    }
+    return await this.userService.delete(id);
   }
 }

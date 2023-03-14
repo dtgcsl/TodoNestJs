@@ -1,20 +1,16 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Users } from '../entity/users.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateUserDto } from './dto/create-user-dto';
 import { UpdateUserDto } from './dto/update-user-dto';
 import * as bcrypt from 'bcryptjs';
-import { Todo } from '../entity/todo.entity';
-import { AssignRoleDto } from '../role/dto/assign-role-dto';
 import { Role } from '../entity/role.entity';
-import { UsersHasTodos } from '../entity/usersHasTodos.entity';
-import { AssignTodoDto } from '../todo/dto/Manager Todo/assign-todo-dto';
-import { UpdateAssignTodoDto } from '../todo/dto/Manager Todo/update-assign-todo-dto';
-import { DeleteAssignTodoDto } from '../todo/dto/Manager Todo/delete-assign-todo-dto';
-import { UpdateAssignRoleDto } from '../role/dto/update-assign-role-dto';
-import { RoleEnum } from '../role/enum/role.enum';
-import { DeleteAssignRoleDto } from '../role/dto/delete-assign-role-dto';
 
 export type User = any;
 
@@ -43,72 +39,51 @@ export class UsersService {
       .leftJoinAndSelect('usersHasTodos.todo', 'todo')
       .orderBy('users.uid')
       .getMany();
-    // return await this.UsersRepository.find({
-    //   select: {
-    //     uid: true,
-    //     name: true,
-    //     roles: {
-    //       name: true,
-    //     },
-    //     usersHasTodos: {
-    //       todoId: true,
-    //       todo: {
-    //         name: true,
-    //         createAt: true,
-    //         updateAt: true,
-    //         createdById: true,
-    //       },
-    //     },
-    //   },
-    //   relations: {
-    //     roles: true,
-    //     usersHasTodos: {
-    //       todo: true,
-    //     },
-    //   },
-    //   order: {
-    //     uid: 'ASC',
-    //   },
-    // });
   }
 
   async findById(id: number): Promise<Users | undefined> {
-    // const a = await this.UsersRepository.createQueryBuilder('users')
-    //   .leftJoinAndSelect('users.roles', 'role')
-    //   .leftJoinAndSelect('users.usersHasTodos', 'usersHasTodos')
-    //   .leftJoinAndSelect('usersHasTodos.todo', 'todo')
-    //   .where('users.uid = :uid', { uid: id })
-    //   .getOne();
-    // return a;
-    return await this.UsersRepository.findOneOrFail({
-      select: {
-        uid: true,
-        name: true,
-        roles: {
+    try {
+      return await this.UsersRepository.findOneOrFail({
+        select: {
+          uid: true,
           name: true,
-        },
-        usersHasTodos: {
-          todoId: true,
-          todo: {
+          roles: {
             name: true,
-            createAt: true,
-            updateAt: true,
-            createdById: true,
+          },
+          usersHasTodos: {
+            todoId: true,
+            todo: {
+              name: true,
+              createAt: true,
+              updateAt: true,
+              createdById: true,
+            },
           },
         },
-      },
-      relations: {
-        roles: {
-          rolesHasPermissions: true,
+        relations: {
+          roles: {
+            rolesHasPermissions: true,
+          },
+          usersHasTodos: {
+            todo: true,
+          },
         },
-        usersHasTodos: {
-          todo: true,
+        where: {
+          uid: id,
         },
-      },
-      where: {
-        uid: id,
-      },
-    });
+      });
+    } catch (error) {
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          error: 'Not found that id',
+        },
+        HttpStatus.BAD_REQUEST,
+        {
+          cause: error,
+        },
+      );
+    }
   }
 
   async findOne(name: string): Promise<Users | undefined> {
@@ -130,10 +105,10 @@ export class UsersService {
     } catch (error) {
       throw new HttpException(
         {
-          status: HttpStatus.FORBIDDEN,
-          error: 'Username or password not correct! Please try again',
+          status: HttpStatus.BAD_REQUEST,
+          error: 'Not found that id',
         },
-        HttpStatus.FORBIDDEN,
+        HttpStatus.BAD_REQUEST,
         {
           cause: error,
         },
@@ -142,14 +117,42 @@ export class UsersService {
   }
 
   async update(id: number, updateUser: UpdateUserDto) {
-    const userUpdate = await this.UsersRepository.findOneByOrFail({
-      uid: id,
-    });
-    this.UsersRepository.merge(userUpdate, updateUser);
-    return await this.UsersRepository.save(userUpdate);
+    try {
+      const userUpdate = await this.UsersRepository.findOneByOrFail({
+        uid: id,
+      });
+      this.UsersRepository.merge(userUpdate, updateUser);
+      return await this.UsersRepository.save(userUpdate);
+    } catch (error) {
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          error: 'Not found that id',
+        },
+        HttpStatus.BAD_REQUEST,
+        {
+          cause: error,
+        },
+      );
+    }
   }
 
   async delete(id: number) {
-    return await this.UsersRepository.delete({ uid: id });
+    try {
+      const users = await this.UsersRepository.delete({ uid: id });
+      if (users.affected === 1) return 'User has been delete';
+      throw new Error();
+    } catch (error) {
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          error: 'Not found that id',
+        },
+        HttpStatus.BAD_REQUEST,
+        {
+          cause: error,
+        },
+      );
+    }
   }
 }

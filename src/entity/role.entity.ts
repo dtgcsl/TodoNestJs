@@ -31,4 +31,6 @@ export class Role {
     },
   )
   rolesHasPermissions: RolesHasPermissions[];
+  @Column({ type: 'bit', default: 1 })
+  isDeleted: boolean;
 }
