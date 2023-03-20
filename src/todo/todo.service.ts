@@ -39,8 +39,9 @@ export class TodoService {
       .getOne();
     if (Todo === null) {
       throw new HttpException('Not found that id', HttpStatus.BAD_REQUEST);
+    } else {
+      return Todo;
     }
-    return Todo;
   }
 
   async update(id: number, updateTodo: UpdateTodoDto) {
@@ -55,8 +56,11 @@ export class TodoService {
     const todoDelete = await this.TodoRepository.delete({
       todoId: id,
     });
-    if (todoDelete.affected === 1) return 'Todo has been delete';
-    throw new HttpException('Not found that id', HttpStatus.BAD_REQUEST);
+    if (todoDelete?.affected === 0) {
+      throw new HttpException('Not found that id', HttpStatus.BAD_REQUEST);
+    } else {
+      return 'Todo has been delete';
+    }
   }
 }
 

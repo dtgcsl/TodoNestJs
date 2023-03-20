@@ -27,7 +27,7 @@ export class UsersService {
     return newUser;
   }
 
-  async findAll(): Promise<any> {
+  async findAll(): Promise<Users[]> {
     return await this.UsersRepository.createQueryBuilder('users')
       .leftJoinAndSelect('users.roles', 'role')
       .leftJoinAndSelect('users.usersHasTodos', 'usersHasTodos')

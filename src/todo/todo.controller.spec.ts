@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { TodoController } from './todo.controller';
+import { AssignTodoController, TodoController } from './todo.controller';
 import { TodoService } from './todo.service';
 
 describe('Todo Controller', () => {
