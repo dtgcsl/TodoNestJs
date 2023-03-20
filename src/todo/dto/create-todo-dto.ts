@@ -2,7 +2,7 @@ import { IsEmpty, IsNotEmpty } from 'class-validator';
 import { extend } from '@nestjs/graphql';
 import { ITodo } from '../interface/todo.interface';
 
-export class CreateTodoDto implements ITodo {
+export class CreateTodoDto {
   @IsEmpty()
   id: number;
   @IsNotEmpty()

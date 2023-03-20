@@ -7,7 +7,7 @@ describe('UserController', () => {
   let controller: UsersController;
 
   const mockUsersService = {
-    create: jest.fn((dto) => {
+    insertOne: jest.fn((dto) => {
       return {
         id: 1,
         ...dto,
@@ -27,7 +27,7 @@ describe('UserController', () => {
       };
     }),
 
-    update: jest.fn().mockImplementation((id, dto) => ({
+    updateOne: jest.fn().mockImplementation((id, dto) => ({
       id,
       ...dto,
     })),
@@ -57,7 +57,7 @@ describe('UserController', () => {
       ...dto,
     });
 
-    expect(mockUsersService.create).toHaveBeenCalledWith(dto);
+    expect(mockUsersService.insertOne).toHaveBeenCalledWith(dto);
   });
 
   it('should get array of users', async () => {
@@ -83,7 +83,7 @@ describe('UserController', () => {
       ...dto,
     });
 
-    expect(mockUsersService.update).toHaveBeenCalled();
+    expect(mockUsersService.updateOne).toHaveBeenCalled();
   });
 
   it('should delete a users', async () => {

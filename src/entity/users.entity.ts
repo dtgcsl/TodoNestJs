@@ -20,4 +20,9 @@ export class Users {
     cascade: true,
   })
   roles: Role[];
+  constructor(uid: number, name: string, password: string) {
+    this.uid = uid;
+    this.name = name;
+    this.password = password;
+  }
 }

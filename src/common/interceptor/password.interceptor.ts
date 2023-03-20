@@ -13,11 +13,11 @@ export class PasswordInterceptor implements NestInterceptor {
       map((data) => {
         if (Array.isArray(data)) {
           return data.map((item) => {
-            delete item.pass;
+            delete item.password;
             return item;
           });
         } else {
-          delete data.pass;
+          delete data.password;
           return data;
         }
       }),

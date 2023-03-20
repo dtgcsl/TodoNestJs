@@ -42,7 +42,7 @@ export class TodoController {
 
   @Get('/:id')
   async findOne(@Param('id', ParseIntPipe) id: number) {
-    const Todo = await this.todoService.findOne(id);
+    return await this.todoService.findOne(id);
   }
 
   // @UseGuards(RolesGuard, PermissionsGuard, OwnersGuard)

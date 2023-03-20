@@ -9,27 +9,22 @@ import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateUserDto } from './dto/create-user-dto';
 import { UpdateUserDto } from './dto/update-user-dto';
-import * as bcrypt from 'bcryptjs';
-import { Role } from '../entity/role.entity';
+import { encodePassword } from '../utils/bcrypt';
 
 export type User = any;
-
-const saltOrRounds = 10;
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(Users)
     private UsersRepository: Repository<Users>,
-    @InjectRepository(Role)
-    private RoleRepository: Repository<Role>,
   ) {}
 
-  async create(createUser: CreateUserDto) {
-    createUser.password = await bcrypt.hash(createUser.password, saltOrRounds);
-    return await this.UsersRepository.save(
-      this.UsersRepository.create(createUser),
-    );
+  async insertOne(createUserDto: CreateUserDto) {
+    createUserDto.password = await encodePassword(createUserDto.password);
+    const newUser = this.UsersRepository.create(createUserDto);
+    await this.UsersRepository.save(newUser);
+    return newUser;
   }
 
   async findAll(): Promise<any> {
@@ -106,7 +101,7 @@ export class UsersService {
       throw new HttpException(
         {
           status: HttpStatus.BAD_REQUEST,
-          error: 'Not found that id',
+          error: 'Not found that name',
         },
         HttpStatus.BAD_REQUEST,
         {
@@ -116,43 +111,19 @@ export class UsersService {
     }
   }
 
-  async update(id: number, updateUser: UpdateUserDto) {
-    try {
-      const userUpdate = await this.UsersRepository.findOneByOrFail({
-        uid: id,
-      });
-      this.UsersRepository.merge(userUpdate, updateUser);
-      return await this.UsersRepository.save(userUpdate);
-    } catch (error) {
-      throw new HttpException(
-        {
-          status: HttpStatus.BAD_REQUEST,
-          error: 'Not found that id',
-        },
-        HttpStatus.BAD_REQUEST,
-        {
-          cause: error,
-        },
-      );
+  async updateOne(id: number, updateUser: UpdateUserDto) {
+    const a = await this.UsersRepository.update(id, updateUser);
+    if (a?.affected === 0) {
+      throw new HttpException('Not found that id', HttpStatus.BAD_REQUEST);
     }
+    return this.UsersRepository.findOne({ where: { uid: id } });
   }
 
   async delete(id: number) {
-    try {
-      const users = await this.UsersRepository.delete({ uid: id });
-      if (users.affected === 1) return 'User has been delete';
-      throw new Error();
-    } catch (error) {
-      throw new HttpException(
-        {
-          status: HttpStatus.BAD_REQUEST,
-          error: 'Not found that id',
-        },
-        HttpStatus.BAD_REQUEST,
-        {
-          cause: error,
-        },
-      );
+    const users = await this.UsersRepository.delete({ uid: id });
+    if (users?.affected === 0) {
+      throw new HttpException('Not found that id', HttpStatus.BAD_REQUEST);
     }
+    return 'User has been delete';
   }
 }

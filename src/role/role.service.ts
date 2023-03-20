@@ -1,5 +1,5 @@
 import { Role } from '../entity/role.entity';
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { Todo } from '../entity/todo.entity';
 import { UpdateAssignRoleDto } from './dto/update-assign-role-dto';
 import { UsersHasTodos } from '../entity/usersHasTodos.entity';
@@ -29,7 +29,8 @@ export class AssignRoleService {
     const users = await this.UsersRepository.findOne({
       where: { uid: uid },
     });
-    if (!users) return 'Users is not correct';
+    if (!users)
+      throw new HttpException('Users is not correct', HttpStatus.BAD_REQUEST);
     const roleOfUser = await this.RoleRepository.createQueryBuilder('role')
       .where('uid = :uid AND name= :role', { uid: uid, role: role })
       .getOne();
@@ -39,7 +40,7 @@ export class AssignRoleService {
         this.RoleRepository.create({ uid: uid, name: role }),
       );
     } else {
-      return 'The role has been assign';
+      throw new HttpException('Users has been assign', HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -49,7 +50,8 @@ export class AssignRoleService {
     const users = await this.UsersRepository.findOne({
       where: { uid: uid },
     });
-    if (!users) return 'Users is not correct';
+    if (!users)
+      throw new HttpException('Users is not correct', HttpStatus.BAD_REQUEST);
     if (typeof arrRole === 'string') {
       await this.RoleRepository.delete({
         uid: uid,
@@ -66,7 +68,8 @@ export class AssignRoleService {
         .execute();
     }
     if (arrRole.length >= Object.keys(RoleEnum).length)
-      return 'Role must not repeat';
+      if (!users)
+        throw new HttpException('Role is repeat', HttpStatus.BAD_REQUEST);
     await this.RoleRepository.delete({
       uid: uid,
     });
@@ -83,7 +86,7 @@ export class AssignRoleService {
         ])
         .execute();
     }
-    return;
+    return 'Role has been update';
   }
 
   async deleteRole(deleteAssignRoleDto: DeleteAssignRoleDto) {
@@ -94,7 +97,8 @@ export class AssignRoleService {
       where: { uid: uid },
     });
 
-    if (!users) return 'Users is not correct';
+    if (!users)
+      throw new HttpException('Users is not correct', HttpStatus.BAD_REQUEST);
     const usersHasRole = await this.RoleRepository.createQueryBuilder('role')
       .delete()
       .from(Role)
@@ -103,6 +107,11 @@ export class AssignRoleService {
         role: role,
       })
       .execute();
-    return usersHasRole;
+    if (usersHasRole.affected === 0)
+      throw new HttpException(
+        'Users does not have role',
+        HttpStatus.BAD_REQUEST,
+      );
+    return 'Role has been delete';
   }
 }

@@ -32,9 +32,9 @@ export class UsersController {
 
   @Post()
   // @HasRoles(<RoleEnum>'Admin')
-  @UseInterceptors(PasswordInterceptor)
+  // @UseInterceptors(PasswordInterceptor)
   async create(@Body() createUserDto: CreateUserDto) {
-    return this.userService.create(createUserDto);
+    return this.userService.insertOne(createUserDto);
   }
 
   @Get()
@@ -48,11 +48,8 @@ export class UsersController {
   }
 
   @Patch(':id')
-  async update(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() updateUserDto: UpdateUserDto,
-  ) {
-    return await this.userService.update(id, updateUserDto);
+  async update(@Param('id') id: number, @Body() updateUserDto: UpdateUserDto) {
+    return await this.userService.updateOne(id, updateUserDto);
   }
 
   @Delete(':id')

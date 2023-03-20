@@ -36,27 +36,8 @@ export class PermissionController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
-    try {
-      const permission = await this.permissionService.findOne(+id);
-      console.log(permission);
-      if (permission !== null) {
-        return permission;
-      } else {
-        throw new Error();
-      }
-    } catch (error) {
-      throw new HttpException(
-        {
-          status: HttpStatus.FORBIDDEN,
-          error: 'Not found that id',
-        },
-        HttpStatus.FORBIDDEN,
-        {
-          cause: error,
-        },
-      );
-    }
+  async findOne(@Param('id') id: number) {
+    return this.permissionService.findOne(id);
   }
 
   @Patch(':id')

@@ -1,10 +1,4 @@
-import {
-  BadRequestException,
-  HttpException,
-  HttpStatus,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { Todo } from '../entity/todo.entity';
 import { Repository } from 'typeorm';
 import { CreateTodoDto } from './dto/create-todo-dto';
@@ -41,29 +35,15 @@ export class TodoService {
   }
 
   async findOne(id: number): Promise<Todo> {
-    try {
-      const Todo = await this.TodoRepository.createQueryBuilder('todo')
-        .leftJoinAndSelect('todo.usersHasTodos', 'usersHasTodos')
-        .select(['todo', 'usersHasTodos.uid'])
-        .where('todo.todoId = :id', { id: id })
-        .getOne();
-      if (Todo !== null) {
-        return Todo;
-      } else {
-        throw new Error();
-      }
-    } catch (error) {
-      throw new HttpException(
-        {
-          status: HttpStatus.BAD_REQUEST,
-          error: 'Not found that id',
-        },
-        HttpStatus.BAD_REQUEST,
-        {
-          cause: error,
-        },
-      );
+    const Todo = await this.TodoRepository.createQueryBuilder('todo')
+      .leftJoinAndSelect('todo.usersHasTodos', 'usersHasTodos')
+      .select(['todo', 'usersHasTodos.uid'])
+      .where('todo.todoId = :id', { id: id })
+      .getOne();
+    if (Todo === null) {
+      throw new HttpException('Not found that id', HttpStatus.BAD_REQUEST);
     }
+    return Todo;
   }
 
   async update(id: number, updateTodo: UpdateTodoDto) {
@@ -89,24 +69,11 @@ export class TodoService {
   }
 
   async delete(id: number) {
-    try {
-      const todoDelete = await this.TodoRepository.delete({
-        todoId: id,
-      });
-      if (todoDelete.affected === 1) return 'Todo has been delete';
-      throw new Error();
-    } catch (error) {
-      throw new HttpException(
-        {
-          status: HttpStatus.BAD_REQUEST,
-          error: 'Not found that id',
-        },
-        HttpStatus.BAD_REQUEST,
-        {
-          cause: error,
-        },
-      );
-    }
+    const todoDelete = await this.TodoRepository.delete({
+      todoId: id,
+    });
+    if (todoDelete.affected === 1) return 'Todo has been delete';
+    throw new HttpException('Not found that id', HttpStatus.BAD_REQUEST);
   }
 }
 
@@ -122,122 +89,94 @@ export class AssignTodoService {
   ) {}
 
   async assignTodo(assignTodoDto: AssignTodoDto) {
-    try {
-      const uid = assignTodoDto.uid;
-      const todoId = assignTodoDto.todoId;
+    const uid = assignTodoDto.uid;
+    const todoId = assignTodoDto.todoId;
 
-      const todo = await this.TodoRepository.findOne({
-        where: { todoId: todoId },
-      });
-      if (!todo) throw new Error('Todo is not correct');
-      const users = await this.UsersRepository.findOne({
-        where: { uid: uid },
-      });
-      if (!users) throw new Error('Users is not correct');
-      const usersHasTodos =
-        await this.UsersHasTodosRepository.createQueryBuilder('usersHasTodo')
-          .where('uid = :uid AND "todoId"= :todoId', {
-            uid: uid,
-            todoId: todoId,
-          })
-          .getOne();
-      if (!usersHasTodos) {
-        return this.UsersHasTodosRepository.save(
-          this.UsersHasTodosRepository.create(assignTodoDto),
-        );
-      } else {
-        throw new Error('The todo has been assign');
-      }
-    } catch (error) {
+    const todo = await this.TodoRepository.findOne({
+      where: { todoId: todoId },
+    });
+    if (!todo)
+      throw new HttpException('Todo is not correct', HttpStatus.BAD_REQUEST);
+    const users = await this.UsersRepository.findOne({
+      where: { uid: uid },
+    });
+    if (!users)
+      throw new HttpException('Users is not correct', HttpStatus.BAD_REQUEST);
+    const usersHasTodos = await this.UsersHasTodosRepository.createQueryBuilder(
+      'usersHasTodo',
+    )
+      .where('uid = :uid AND "todoId"= :todoId', {
+        uid: uid,
+        todoId: todoId,
+      })
+      .getOne();
+    if (usersHasTodos)
       throw new HttpException(
-        {
-          status: HttpStatus.BAD_REQUEST,
-          error: error.message,
-        },
+        'The todo has been assin',
         HttpStatus.BAD_REQUEST,
-        {
-          cause: error,
-        },
       );
-    }
+    return this.UsersHasTodosRepository.save(
+      this.UsersHasTodosRepository.create(assignTodoDto),
+    );
   }
 
   async updateTodo(updateAssignTodoDto: UpdateAssignTodoDto) {
-    try {
-      const todoId = updateAssignTodoDto.todoId;
-      const arrUid = updateAssignTodoDto.uid;
+    const todoId = updateAssignTodoDto.todoId;
+    const arrUid = updateAssignTodoDto.uid;
 
-      const todo = await this.TodoRepository.findOne({
-        where: { todoId: todoId },
-      });
-      if (!todo) throw new Error('Todo is not correct');
-      const users = await this.UsersRepository.createQueryBuilder('users')
-        .where('users.uid IN (:...uid)', { uid: arrUid })
-        .getMany();
-      if (+users.length !== +arrUid.length) {
-        throw new Error('Some of users is not correct please try again');
-      }
-      await this.UsersHasTodosRepository.delete({
-        todoId: todoId,
-      });
-      for (const uid of arrUid) {
-        await this.UsersHasTodosRepository.createQueryBuilder()
-          .insert()
-          .into(UsersHasTodos)
-          .values([
-            {
-              todoId: todoId,
-              uid: uid,
-            },
-          ])
-          .execute();
-      }
-      return 'The data has been update';
-    } catch (error) {
+    const todo = await this.TodoRepository.findOne({
+      where: { todoId: todoId },
+    });
+    if (!todo)
+      throw new HttpException('Todo is not correct', HttpStatus.BAD_REQUEST);
+    const users = await this.UsersRepository.createQueryBuilder('users')
+      .where('users.uid IN (:...uid)', { uid: arrUid })
+      .getMany();
+    if (+users.length !== +arrUid.length) {
       throw new HttpException(
-        {
-          status: HttpStatus.BAD_REQUEST,
-          error: error.message,
-        },
+        'Some of users is not correct please try again',
         HttpStatus.BAD_REQUEST,
-        {
-          cause: error,
-        },
       );
     }
+    await this.UsersHasTodosRepository.delete({
+      todoId: todoId,
+    });
+    for (const uid of arrUid) {
+      await this.UsersHasTodosRepository.createQueryBuilder()
+        .insert()
+        .into(UsersHasTodos)
+        .values([
+          {
+            todoId: todoId,
+            uid: uid,
+          },
+        ])
+        .execute();
+    }
+    return 'The data has been update';
   }
 
   async deleteTodo(deleteAssignTodoDto: DeleteAssignTodoDto) {
-    try {
-      const uid = deleteAssignTodoDto.uid;
-      const todoId = deleteAssignTodoDto.todoId;
+    const uid = deleteAssignTodoDto.uid;
+    const todoId = deleteAssignTodoDto.todoId;
 
-      const users = await this.UsersRepository.findOne({
-        where: { uid: uid },
-      });
-      if (!users) throw new Error('Users is not correct');
-      const todo = await this.TodoRepository.findOne({
-        where: { todoId: todoId },
-      });
-      if (!todo) throw new Error('Todo is not correct');
-      return await this.UsersHasTodosRepository.createQueryBuilder(
-        'usersHasTodo',
-      )
-        .delete()
-        .from(UsersHasTodos)
-        .where('uid = :uid AND todoId = :todoId', {
-          uid: uid,
-          todoId: todoId,
-        })
-        .execute();
-    } catch (error) {
-      throw new HttpException(
-        {
-          status: HttpStatus.BAD_REQUEST,
-          error: error.message,
-        },
-        HttpStatus.BAD_REQUEST,
-      );
-    }
+    const users = await this.UsersRepository.findOne({
+      where: { uid: uid },
+    });
+    if (!users)
+      throw new HttpException('Users is not correct', HttpStatus.BAD_REQUEST);
+    const todo = await this.TodoRepository.findOne({
+      where: { todoId: todoId },
+    });
+    if (!todo)
+      throw new HttpException('Todo is not correct', HttpStatus.BAD_REQUEST);
+    return await this.UsersHasTodosRepository.createQueryBuilder('usersHasTodo')
+      .delete()
+      .from(UsersHasTodos)
+      .where('uid = :uid AND todoId = :todoId', {
+        uid: uid,
+        todoId: todoId,
+      })
+      .execute();
   }
 }

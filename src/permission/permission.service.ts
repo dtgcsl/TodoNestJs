@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { CreatePermissionDto } from './dto/create-permission.dto';
 import { UpdatePermissionDto } from './dto/update-permission.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -38,17 +38,17 @@ export class PermissionService {
   }
 
   findOne(id: number) {
-    return (
-      this.PermissionRepository.createQueryBuilder('permission')
-        .leftJoinAndSelect(
-          'permission.rolesHasPermissions',
-          'roleHasPermissions',
-        )
-        .select(['permission', 'roleHasPermissions.rid'])
-        // .orderBy('permission.id')
-        .where('permission.id = :id', { id: id })
-        .getOne()
-    );
+    const permission = this.PermissionRepository.createQueryBuilder(
+      'permission',
+    )
+      .leftJoinAndSelect('permission.rolesHasPermissions', 'roleHasPermissions')
+      .select(['permission', 'roleHasPermissions.rid'])
+      // .orderBy('permission.id')
+      .where('permission.id = :id', { id: id })
+      .getOne();
+    if (!permission)
+      throw new HttpException('Not found that id', HttpStatus.BAD_REQUEST);
+    return permission;
   }
 
   async update(id: number, updatePermissionDto: UpdatePermissionDto) {
