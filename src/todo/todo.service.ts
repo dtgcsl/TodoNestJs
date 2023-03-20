@@ -15,15 +15,12 @@ export class TodoService {
   constructor(
     @InjectRepository(Todo)
     private TodoRepository: Repository<Todo>,
-    @InjectRepository(Users)
-    private UsersRepository: Repository<Users>,
-    @InjectRepository(UsersHasTodos)
-    private UsersHasTodosRepository: Repository<UsersHasTodos>,
   ) {}
 
-  async create(createTodo: CreateTodoDto) {
-    await this.TodoRepository.create(createTodo);
-    return this.TodoRepository.save(this.TodoRepository.create(createTodo));
+  async insertOne(createTodo: CreateTodoDto) {
+    const newTodo = await this.TodoRepository.create(createTodo);
+    await this.TodoRepository.save(newTodo);
+    return newTodo;
   }
 
   async findAll(): Promise<Todo[]> {
@@ -47,25 +44,11 @@ export class TodoService {
   }
 
   async update(id: number, updateTodo: UpdateTodoDto) {
-    try {
-      const todoUpdate = await this.TodoRepository.findOneByOrFail({
-        todoId: id,
-      });
-
-      this.TodoRepository.merge(todoUpdate, updateTodo);
-      return await this.TodoRepository.save(todoUpdate);
-    } catch (error) {
-      throw new HttpException(
-        {
-          status: HttpStatus.BAD_REQUEST,
-          error: 'Not found that id',
-        },
-        HttpStatus.BAD_REQUEST,
-        {
-          cause: error,
-        },
-      );
+    const a = await this.TodoRepository.update(id, updateTodo);
+    if (a?.affected === 0) {
+      throw new HttpException('Not found that id', HttpStatus.BAD_REQUEST);
     }
+    return this.TodoRepository.findOne({ where: { todoId: id } });
   }
 
   async delete(id: number) {

@@ -31,8 +31,8 @@ export class TodoController {
   constructor(private todoService: TodoService) {}
 
   @Post()
-  async create(@Body() createTodoDto: CreateTodoDto) {
-    return this.todoService.create(createTodoDto);
+  async insertOne(@Body() createTodoDto: CreateTodoDto) {
+    return this.todoService.insertOne(createTodoDto);
   }
 
   @Get()

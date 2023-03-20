@@ -4,6 +4,11 @@ import { Role } from './role.entity';
 
 @Entity({ name: 'users' })
 export class Users {
+  constructor(uid: number, name: string, password: string) {
+    this.uid = uid;
+    this.name = name;
+    this.password = password;
+  }
   @PrimaryGeneratedColumn()
   uid: number;
   @Column('varchar')
@@ -20,9 +25,4 @@ export class Users {
     cascade: true,
   })
   roles: Role[];
-  constructor(uid: number, name: string, password: string) {
-    this.uid = uid;
-    this.name = name;
-    this.password = password;
-  }
 }

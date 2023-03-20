@@ -12,7 +12,7 @@ describe('Todo Controller', () => {
     createdId: 1,
   };
   const mockTodoService = {
-    create: jest.fn().mockImplementation((dto) => {
+    insertOne: jest.fn().mockImplementation((dto) => {
       return {
         id: 1,
         ...dto,
@@ -57,7 +57,7 @@ describe('Todo Controller', () => {
   });
 
   it('should be create a todo', async () => {
-    expect(await controller.create(dto)).toEqual({
+    expect(await controller.insertOne(dto)).toEqual({
       id: expect.any(Number),
       ...dto,
     });
